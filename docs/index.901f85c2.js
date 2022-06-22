@@ -516,6 +516,9 @@ function hmrAcceptRun(bundle, id) {
 },{}],"edeGs":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
+//fish is skeloton.ts
+//enemy is enemy.ts
+//bubbles is bullet.ts
 parcelHelpers.export(exports, "Game", ()=>Game
 );
 var _pixiJs = require("pixi.js");
@@ -525,7 +528,13 @@ var _playerPng = require("./images/PlayerCharacters/Player.png");
 var _playerPngDefault = parcelHelpers.interopDefault(_playerPng);
 var _townMap = require("./TownMap");
 var _player = require("./Player");
+var _skeleton = require("./skeleton");
+var _bullet = require("./bullet");
+var _bulletPng = require("./images/Map & Terrain/bullet.png");
+var _bulletPngDefault = parcelHelpers.interopDefault(_bulletPng);
 class Game {
+    bullets = [];
+    skeletons = [];
     constructor(){
         console.log("ik ben een game");
         this.pixi = new _pixiJs.Application({
@@ -537,6 +546,7 @@ class Game {
         this.loader = new _pixiJs.Loader();
         this.loader.add('townTexture', _zeldaWorldPngDefault.default);
         this.loader.add('playerSprite', _playerPngDefault.default);
+        this.loader.add("bulletTexture", _bulletPngDefault.default);
         this.loader.add("./attack.json");
         this.loader.add("./enemy.json");
         this.loader.load(()=>this.loadCompleted()
@@ -549,24 +559,42 @@ class Game {
         // read attack spritesheet
         const textures = [];
         for(let i = 1; i <= 13; i++)textures.push(_pixiJs.Texture.from(`a${i}.png`));
-        console.log(textures);
-        // const animatedSprite = new PIXI.AnimatedSprite(textures);
-        // console.log(animatedSprite);
-        // animatedSprite.x = 440;
-        // animatedSprite.y = 440;
-        // animatedSprite.play()
-        // this.pixi.stage.addChild(animatedSprite);
-        //creates player character
-        // this.player = new Player(this, this.townMap, this.loader.resources["playerSprite"].texture!)
+        // read enemy spritesheet
+        const enemytextures = [];
+        for(let i1 = 1; i1 <= 8; i1++)enemytextures.push(_pixiJs.Texture.from(`go_${i1}.png`));
+        //add player 
         this.player = new _player.Player(this, this.townMap, textures);
         this.pixi.stage.addChild(this.player);
+        for(let i2 = 0; i2 < 20; i2++){
+            let sk = new _skeleton.Skeleton(enemytextures);
+            this.pixi.stage.addChild(sk);
+            this.skeletons.push(sk);
+        }
         this.pixi.stage.x = this.pixi.screen.width / 2;
         this.pixi.stage.y = this.pixi.screen.height / 2;
         this.pixi.ticker.add((delta)=>this.update(delta)
         );
     }
+    shootBullet(bx, by) {
+        let bullet = new _bullet.Bullet(bx, by, this, this.loader.resources["bulletTexture"].texture);
+        this.pixi.stage.addChild(bullet);
+        this.bullets.push(bullet);
+    }
+    removeBullet(bullet) {
+        this.bullets = this.bullets.filter((b)=>b !== bullet
+        );
+    }
     update(delta) {
         this.player.update(delta);
+        for (let skeleton of this.skeletons){
+            console.log(skeleton);
+            skeleton.walk();
+            for (let b of this.bullets)if (this.collision(b, skeleton)) {
+                b.hit();
+                skeleton.hit();
+            }
+        }
+        for (let bullet of this.bullets)bullet.update();
     }
     collision(sprite1, sprite2) {
         const bounds1 = sprite1.getBounds();
@@ -576,7 +604,7 @@ class Game {
 }
 let g = new Game();
 
-},{"pixi.js":"dsYej","./images/Map & Terrain/ZeldaWorld.png":"iPcWN","./images/PlayerCharacters/Player.png":"5XZIe","./TownMap":"gzP2J","./Player":"8YLWx","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsYej":[function(require,module,exports) {
+},{"pixi.js":"dsYej","./images/Map & Terrain/ZeldaWorld.png":"iPcWN","./images/PlayerCharacters/Player.png":"5XZIe","./TownMap":"gzP2J","./Player":"8YLWx","./skeleton":"eBNny","./bullet":"bzwxK","./images/Map & Terrain/bullet.png":"eCsvr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsYej":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "utils", ()=>_utils
@@ -37146,7 +37174,6 @@ class Player extends _pixiJs.AnimatedSprite {
         console.log("hyaa! i am link!");
         this.xspeed = 0;
         this.yspeed = 0;
-        //this.direction = 2;
         this.townMap = townMap;
         this.game = game;
         this.animationSpeed = 0.1;
@@ -37161,6 +37188,10 @@ class Player extends _pixiJs.AnimatedSprite {
         );
         window.addEventListener("keyup", (e)=>this.unMove(e)
         );
+    }
+    shoot() {
+        let direction = this.xspeed < 0 ? -1 : 1;
+        this.game.shootBullet(this.x, this.y); //direction
     }
     //operations
     update(delta) {
@@ -37186,8 +37217,12 @@ class Player extends _pixiJs.AnimatedSprite {
     move(e) {
         switch(e.key.toUpperCase()){
             case " ":
-                console.log("attack");
+                console.log("attack sword");
                 this.gotoAndPlay(1);
+                break;
+            case "K":
+                console.log("attack bullet");
+                this.shoot();
                 break;
             case "A":
             case "ARROWLEFT":
@@ -37231,6 +37266,78 @@ class Player extends _pixiJs.AnimatedSprite {
     }
 }
 
-},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["fpRtI","edeGs"], "edeGs", "parcelRequirea0e5")
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"eBNny":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Skeleton", ()=>Skeleton
+);
+var _pixiJs = require("pixi.js");
+class Skeleton extends _pixiJs.AnimatedSprite {
+    constructor(textures){
+        super(textures);
+        this.speed = Math.random() * 5;
+        let townmapwidth = 3048;
+        let townmapheight = 2041;
+        this.x = Math.random() * townmapwidth;
+        this.y = Math.random() * townmapheight;
+        this.anchor.set(0.5);
+        this.scale.set(0.35);
+        this.play();
+        console.log("i am a skeleton");
+        this.animationSpeed = 0.4;
+    }
+    hit() {
+        this.x = 3048;
+    }
+    walk() {
+        this.x += Math.random() * 4 - 2;
+        this.y += Math.random() * 4 - 2;
+    // this.x -= this.speed;
+    // this.y += Math.cos(this.x * 0.03) * 1.1;
+    // if (this.x < -100) {
+    //   this.x = window.innerWidth + 100;
+    //   this.y = Math.random() * window.innerHeight;
+    // }
+    }
+    hitPlayer() {
+        console.log("hit player");
+    }
+}
+
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bzwxK":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Bullet", ()=>Bullet
+);
+var _pixiJs = require("pixi.js");
+class Bullet extends _pixiJs.Sprite {
+    constructor(bx, by, mygame, texture){
+        super(texture);
+        this.scale.set(2);
+        this.x = bx + 80;
+        this.y = by - 30;
+        this.angle = 90;
+        //let townmapwidth = 3048
+        //let townmapheight = 2041
+        this.mygame = mygame;
+        console.log("I am a bullet");
+    }
+    hit() {
+        this.mygame.removeBullet(this);
+        this.destroy();
+    }
+    update() {
+        this.x += 10;
+        if (this.x > 3048) {
+            this.mygame.removeBullet(this);
+            this.destroy();
+        }
+    }
+}
+
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"eCsvr":[function(require,module,exports) {
+module.exports = require('./helpers/bundle-url').getBundleURL('emE5o') + "bullet.dc1aaeba.png" + "?" + Date.now();
+
+},{"./helpers/bundle-url":"lgJ39"}]},["fpRtI","edeGs"], "edeGs", "parcelRequirea0e5")
 
 //# sourceMappingURL=index.901f85c2.js.map

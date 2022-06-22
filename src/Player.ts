@@ -3,10 +3,10 @@ import { TownMap } from './TownMap'
 import { Game } from './game'
 
 export class Player extends PIXI.AnimatedSprite {
+    
     //variables
     private xspeed: number;
     private yspeed: number;
-    //private direction: number;
     private townMap: TownMap;
     private game: Game;
 
@@ -19,7 +19,7 @@ export class Player extends PIXI.AnimatedSprite {
         console.log("hyaa! i am link!");
         this.xspeed = 0;
         this.yspeed = 0;
-        //this.direction = 2;
+    
         this.townMap = townMap;
 
         this.game = game;
@@ -41,6 +41,11 @@ export class Player extends PIXI.AnimatedSprite {
        
         
     }
+
+    private shoot() {
+        let direction = this.xspeed < 0 ? -1 : 1
+        this.game.shootBullet(this.x, this.y); //direction
+      }
 
 
     //operations
@@ -71,9 +76,13 @@ export class Player extends PIXI.AnimatedSprite {
     private move(e: KeyboardEvent): void {
         switch (e.key.toUpperCase()) {
             case " ":
-                console.log("attack")
+                console.log("attack sword")
                 this.gotoAndPlay(1)
                 break;
+            case "K":
+                console.log("attack bullet")
+                this.shoot()
+                break;    
             case "A":
             case "ARROWLEFT":
                 //this.direction = 3
